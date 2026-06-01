@@ -20,7 +20,7 @@ tags: [ Sommersemester2026, Softwareentwicklung, Übung04]
 
 -->
 
-[![LiaScript Course](https://raw.githubusercontent.com/LiaScript/LiaScript/master/badges/course.svg)](https://liascript.github.io/course/?https://raw.githubusercontent.com/Ifi-Softwareentwicklung-SoSe2026/exercise_04/refs/heads/main/README.md)
+[![LiaScript Course](https://raw.githubusercontent.com/LiaScript/LiaScript/master/badges/course.svg)](https://liascript.github.io/course/?https://raw.githubusercontent.com/Ifi-Softwareentwicklung-SoSe2026/exercise_04-FelixSiegel/refs/heads/main/README.md)
 
 #  Aufgabe 04
 
@@ -423,9 +423,53 @@ Hier bitte den Code aus `robots_exercise` in ein UML Diagramm überführen.
 
 ```text @plantUML
 @startuml
+package RoboterDatenverwaltung {
+    interface ISerializer {
+        + SpeichernAlsJSON(string): void
+        + {static} {abstract} LadenAusJSON(string): Roboter
+        + SpeichernAlsCSV(string): void
+        + {static} {abstract} LadenAusCSV(string): Roboter
+    }
+    
+    class Roboter {
+        + Name: string 
+        + Typ: string
+        + Energielevel: int
+        
+        + Roboter(string, string, int): Roboter
+        + Roboter(): Roboter
+        
+        + virtual GetStatus(): string
+        + virtual Activate(): void
+    }
+    
+    class Lieferroboter {
+        + Lieferkapazität: int
+        
+        + Lieferroboter(): Lieferroboter
+        + Lieferroboter(string, int, int): Lieferroboter
+        + GetStatus(): string
+    }
+}
 
-Arbeiten Sie hier !!!
+class Program {
+    - ROBOT_DATA_FOLDER: string
+    - ROBOT_COUNT: int
+    - {static} RandomGenerator: Random
+    - {static} StandardTypen: string[]
+    
+    + {static} Main(string[]): void
+    - {static} InitialisiereZufaelligeRoboter(int): List<Roboter>
+    - {static} ErzeugeZufaelligenRoboter(int): Roboter
+    - {static} GibStatusAus(IEnumerable<Roboter>): void
+    - {static} SpeichereAlleRoboter(IEnumerable<Roboter>, string): void
+    - {static} RemoveExistingRobots(string): void
+    - {static} LadeAlleCsvRoboter(string): List<Roboter>
+    - {static} LadeAlleJsonRoboter(string): List<Roboter>
+}
 
+Lieferroboter --|> Roboter
+Roboter ..|> ISerializer
 @enduml
 ```
 @plantUML.eval(png)
