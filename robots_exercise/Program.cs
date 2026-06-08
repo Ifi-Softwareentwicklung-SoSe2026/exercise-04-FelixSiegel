@@ -15,25 +15,30 @@ class Program
 
     static void Main(string[] args)
     {
-        List<Roboter> robot = InitialisiereZufaelligeRoboter(ROBOT_COUNT);
+        IRoboterRepository repository = new RoboterRepository(
+            ROBOT_DATA_FOLDER,
+            new CsvRoboterSerializer(),
+            new JsonRoboterSerializer()
+        );
+
+        List<Roboter> roboter = InitialisiereZufaelligeRoboter(ROBOT_COUNT);
 
         Console.WriteLine("Initiale Roboter:");
-        GibStatusAus(robot);
+        GibStatusAus(roboter);
 
-        SpeichereAlleRoboter(robot, ROBOT_DATA_FOLDER);
+        repository.SpeichereAlle(roboter);
 
-        robot.Clear();
+        roboter.Clear();
         Console.WriteLine("\nRoboterliste geleert.");
 
-        robot = LadeAlleCsvRoboter(ROBOT_DATA_FOLDER);
+        roboter = repository.LadeAlleCsv();
         Console.WriteLine("\nAus CSV geladene Roboter:");
-        GibStatusAus(robot);
+        GibStatusAus(roboter);
 
-        robot.Clear();
-        robot = LadeAlleJsonRoboter(ROBOT_DATA_FOLDER);
+        roboter.Clear();
+        roboter = repository.LadeAlleJson();
         Console.WriteLine("\nAus JSON geladene Roboter:");
-        GibStatusAus(robot);
-        
+        GibStatusAus(roboter);
     }
 
     private static List<Roboter> InitialisiereZufaelligeRoboter(int anzahl)
@@ -70,55 +75,5 @@ class Program
         {
             Console.WriteLine(einzelnerRoboter.GetStatus());
         }
-    }
-
-    private static void SpeichereAlleRoboter(IEnumerable<Roboter> roboter, string ordner)
-    {
-        Directory.CreateDirectory(ordner);
-
-        RemoveExistingRobots(ordner);
-
-        int index = 1;
-        foreach (Roboter einzelnerRoboter in roboter)
-        {
-            string basisname = $"roboter_{index:D2}";
-            string csvPfad = Path.Combine(ordner, $"{basisname}.csv");
-            string jsonPfad = Path.Combine(ordner, $"{basisname}.json");
-
-            einzelnerRoboter.SpeichernAlsCSV(csvPfad);
-            einzelnerRoboter.SpeichernAlsJSON(jsonPfad);
-            index++;
-        }
-    }
-
-    private static void RemoveExistingRobots(string ordner)
-    {
-        foreach (string datei in Directory.GetFiles(ordner, "*.csv"))
-        {
-            File.Delete(datei);
-        }
-
-        foreach (string datei in Directory.GetFiles(ordner, "*.json"))
-        {
-            File.Delete(datei);
-        }
-    }
-
-    private static List<Roboter> LadeAlleCsvRoboter(string ordner)
-    {
-        return Directory
-            .GetFiles(ordner, "*.csv")
-            .OrderBy(datei => datei)
-            .Select(Roboter.LadenAusCSV)
-            .ToList();
-    }
-
-    private static List<Roboter> LadeAlleJsonRoboter(string ordner)
-    {
-        return Directory
-            .GetFiles(ordner, "*.json")
-            .OrderBy(datei => datei)
-            .Select(Roboter.LadenAusJSON)
-            .ToList();
     }
 }
