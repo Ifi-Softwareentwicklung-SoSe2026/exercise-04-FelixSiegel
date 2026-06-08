@@ -482,10 +482,78 @@ Hier soll das überarbeitete UML Diagramm zum Code in `robots_exercise` erstellt
 
 ```text @plantUML
 @startuml
+skinparam classAttributeIconSize 0
 
-Arbeiten Sie hier !!!
+class Program {
+    - ROBOT_DATA_FOLDER: string
+    - ROBOT_COUNT: int
+    + {static} Main(args: string[]): void
+}
+
+package RoboterDatenverwaltung {
+    class Roboter {
+        + Name: string
+        + Typ: string
+        + Energielevel: int
+        + GetStatus(): string
+        + Activate(): void
+    }
+
+    class Lieferroboter {
+        + Lieferkapazitaet: int
+        + GetStatus(): string
+    }
+
+    interface IRoboterRepository {
+        + SpeichereAlle(roboter: IEnumerable<Roboter>): void
+        + LadeAlleCsv(): List<Roboter>
+        + LadeAlleJson(): List<Roboter>
+        + LoescheVorhandeneDateien(): void
+    }
+
+    class RoboterRepository {
+        - ordner: string
+        - csvSerializer: IRoboterSerializer
+        - jsonSerializer: IRoboterSerializer
+        + SpeichereAlle(roboter: IEnumerable<Roboter>): void
+        + LadeAlleCsv(): List<Roboter>
+        + LadeAlleJson(): List<Roboter>
+        + LoescheVorhandeneDateien(): void
+    }
+
+    interface IRoboterSerializer {
+        + Speichern(roboter: Roboter, dateipfad: string): void
+        + Laden(dateipfad: string): Roboter
+    }
+
+    class CsvRoboterSerializer {
+        + Speichern(roboter: Roboter, dateipfad: string): void
+        + Laden(dateipfad: string): Roboter
+    }
+
+    class JsonRoboterSerializer {
+        + Speichern(roboter: Roboter, dateipfad: string): void
+        + Laden(dateipfad: string): Roboter
+    }
+}
+
+Roboter <|-- Lieferroboter
+Program --> IRoboterRepository
+Program ..> Roboter
+IRoboterRepository <|.. RoboterRepository
+RoboterRepository o-- IRoboterSerializer
+IRoboterSerializer <|.. CsvRoboterSerializer
+IRoboterSerializer <|.. JsonRoboterSerializer
+IRoboterSerializer ..> Roboter
 
 @enduml
 ```
 @plantUML.eval(png)
 
+### Begründung der Zielarchitektur
+
+Die aktuelle Struktur koppelt das Domänenmodell stark an Persistenzdetails: `Roboter` enthält neben Eigenschaften und Verhalten auch CSV-/JSON-Serialisierung, Dateizugriff und statische Ladefunktionen. Dadurch muss die Roboterklasse geändert werden, sobald ein Speicherformat angepasst oder ergänzt wird.
+
+Die Zielarchitektur bleibt deshalb bewusst nah am vorhandenen Programm. `Roboter` und `Lieferroboter` enthalten nur noch Roboterzustand und Verhalten. Das Interface `IRoboterSerializer` kapselt das Speichern und Laden eines einzelnen Roboters; konkrete Klassen wie `CsvRoboterSerializer` und `JsonRoboterSerializer` übernehmen die jeweiligen Formate. `RoboterRepository` bündelt den Dateizugriff für mehrere Roboter und verwendet dafür die Serializer.
+
+Damit sinkt die Kopplung zwischen Domänenmodell und Persistenz, ohne die Anwendung unnötig stark umzubauen. Neue Speicherformate können ergänzt werden, ohne die Roboterklassen direkt zu verändern.
